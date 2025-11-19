@@ -8,6 +8,7 @@ import {
   getStats,
   updateKanjiStat,
   updateStreak,
+  updateAnswerCount,
   saveQuizSession,
   getWeakKanji,
   type QuizStats,
@@ -295,6 +296,7 @@ export default function KanjiQuizPage() {
       setScore((s) => s + 1);
       updateKanjiStat(currentKanji.kanji, true);
       updateStreak(true);
+      updateAnswerCount(true);
       
       // Show confetti for streaks
       if (stats.currentStreak > 0 && (stats.currentStreak + 1) % 5 === 0) {
@@ -306,6 +308,7 @@ export default function KanjiQuizPage() {
     } else {
       updateKanjiStat(currentKanji.kanji, false);
       updateStreak(false);
+      updateAnswerCount(false);
       setIncorrectAnswers((prev) => [...prev, currentKanji]);
       setToast({ message: "Incorrect. Keep practicing! 💪", type: "error" });
     }

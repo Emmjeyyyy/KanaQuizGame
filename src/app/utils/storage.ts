@@ -120,13 +120,25 @@ export function updateStreak(isCorrect: boolean): void {
   saveStats(stats);
 }
 
+export function updateAnswerCount(isCorrect: boolean): void {
+  const stats = getStats();
+  
+  if (isCorrect) {
+    stats.correctAnswers++;
+  } else {
+    stats.incorrectAnswers++;
+  }
+  
+  stats.totalQuestions++;
+  saveStats(stats);
+}
+
 export function saveQuizSession(session: QuizSession): void {
   const stats = getStats();
   stats.quizHistory.push(session);
   stats.totalQuizzes++;
-  stats.totalQuestions += session.totalQuestions;
-  stats.correctAnswers += session.score;
-  stats.incorrectAnswers += session.totalQuestions - session.score;
+  // Note: correctAnswers, incorrectAnswers, and totalQuestions are already updated
+  // in real-time via updateAnswerCount(), so we don't need to update them here
   stats.lastQuizDate = new Date().toISOString();
   
   // Keep only last 50 sessions
