@@ -28,6 +28,29 @@ type JishoWordResult = {
   tags?: string[];
 };
 
+// Types for Jisho API response
+type JishoJapaneseEntry = {
+  word?: string;
+  reading?: string;
+};
+
+type JishoSense = {
+  english_definitions?: string[];
+};
+
+type JishoDataEntry = {
+  japanese?: JishoJapaneseEntry[];
+  senses?: JishoSense[];
+  is_common?: boolean;
+  jlpt?: string[];
+  tags?: string[];
+};
+
+type JishoApiResponse = {
+  data?: JishoDataEntry[];
+  error?: string;
+};
+
 // ✅ Hiragana
 const hiraganaBase: Kana[] = [
   { char: "あ", romaji: "a" }, { char: "い", romaji: "i" }, { char: "う", romaji: "u" }, { char: "え", romaji: "e" }, { char: "お", romaji: "o" },
@@ -127,10 +150,10 @@ export default function StudyPage() {
   ];
   // Merge kana based on toggles
   const kanaToDisplay = hiraganaAllWithType.map((h, index) => {
-  const k = katakanaAllWithType[index] || {};
+  const katakanaEntry = katakanaAllWithType[index] || {};
   return {
     hiragana: h.char,
-    katakana: k.char,
+    katakana: katakanaEntry.char,
     romaji: h.romaji,
     type: h.type,
   };
@@ -297,7 +320,7 @@ export default function StudyPage() {
         return { words: [], kanji: [] };
       }
       
-      const data = await response.json();
+      const data = await response.json() as JishoApiResponse;
       
       // Check if response has error
       if (data.error) {
@@ -314,15 +337,15 @@ export default function StudyPage() {
       
       if (data.data && Array.isArray(data.data) && data.data.length > 0) {
         // Process all results, not just first 10
-        data.data.forEach((entry: any) => {
+        data.data.forEach((entry: JishoDataEntry) => {
           if (entry.japanese && Array.isArray(entry.japanese) && entry.japanese.length > 0) {
-            entry.japanese.forEach((j: any) => {
+            entry.japanese.forEach((j: JishoJapaneseEntry) => {
               const word = j.word || "";
               const reading = j.reading || "";
               
               if (word || reading) {
                 const meanings = entry.senses && Array.isArray(entry.senses)
-                  ? entry.senses.flatMap((sense: any) => sense.english_definitions || [])
+                  ? entry.senses.flatMap((sense: JishoSense) => sense.english_definitions || [])
                   : [];
                 
                 // Only add if it has meanings
@@ -367,8 +390,9 @@ export default function StudyPage() {
       }
       
       return { words: [], kanji: [] };
-    } catch (error: any) {
-      console.warn("Jisho API unavailable (network issue):", error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.warn("Jisho API unavailable (network issue):", errorMessage);
       // On error, check fallback map
       const lowerQuery = query.toLowerCase().trim();
       if (englishToKanjiMap[lowerQuery]) {

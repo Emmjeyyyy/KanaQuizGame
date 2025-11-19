@@ -6,7 +6,6 @@ import Toast from "../components/Toast";
 import Confetti from "../components/Confetti";
 import {
   getStats,
-  saveStats,
   updateKanjiStat,
   updateStreak,
   saveQuizSession,
@@ -184,7 +183,7 @@ export default function KanjiQuizPage() {
         }
         
         setMultipleChoiceOptions(options.sort(() => Math.random() - 0.5));
-      } catch (error) {
+      } catch {
         setMultipleChoiceOptions([correctMeaning, "option 1", "option 2", "option 3"]);
       }
     } else {
@@ -225,7 +224,7 @@ export default function KanjiQuizPage() {
           }
           
           setMultipleChoiceOptions(options.sort(() => Math.random() - 0.5));
-        } catch (error) {
+        } catch {
           setMultipleChoiceOptions([correctReading, "reading1", "reading2", "reading3"]);
         }
       } else {
@@ -260,11 +259,13 @@ export default function KanjiQuizPage() {
         clearInterval(timerIntervalRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerMode, timeLeft, showAnswer, currentKanji, gameOver, mode]);
 
   // Initialize kanji list
   useEffect(() => {
     setKanjiList(getKanjiList());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, searchQuery]);
 
   // Load first question when mode is selected
@@ -280,13 +281,12 @@ export default function KanjiQuizPage() {
         setTimeLeft(0);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, questionType, difficulty]);
 
   // Handle answer submission
   const handleAnswer = (isCorrect: boolean) => {
     if (!currentKanji) return;
-
-    const questionTime = Date.now() - questionStartTime;
     
     setFeedback(isCorrect ? "correct" : "incorrect");
     setShowAnswer(true);

@@ -2,10 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "../components/navbar";
-import { getStats, type QuizStats, type KanjiStat } from "../utils/storage";
+import { getStats, type QuizStats } from "../utils/storage";
 
 export default function StatsPage() {
-  const [stats, setStats] = useState<QuizStats>(getStats());
+  // Initialize with default values to prevent hydration mismatch
+  // This ensures server and client render the same initial state
+  const [stats, setStats] = useState<QuizStats>({
+    totalQuizzes: 0,
+    totalQuestions: 0,
+    correctAnswers: 0,
+    incorrectAnswers: 0,
+    bestStreak: 0,
+    currentStreak: 0,
+    lastQuizDate: "",
+    kanjiStats: {},
+    quizHistory: [],
+  });
   const [selectedTab, setSelectedTab] = useState<"overview" | "kanji" | "history">("overview");
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -21,7 +33,7 @@ export default function StatsPage() {
     // Set mounted flag to prevent hydration mismatch
     setMounted(true);
     
-    // Load stats on mount
+    // Load stats on mount (only on client)
     loadStats();
 
     // Listen for storage changes (for cross-tab updates)
@@ -206,7 +218,7 @@ export default function StatsPage() {
               <h2 className="text-2xl font-bold mb-4">Most Studied Kanji</h2>
               <div className="space-y-3">
                 {topKanji.length > 0 ? (
-                  topKanji.map((kanji, index) => (
+                  topKanji.map((kanji) => (
                     <div
                       key={kanji.kanji}
                       className="flex items-center justify-between p-4 bg-gray-700/50 rounded-lg"

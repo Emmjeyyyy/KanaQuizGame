@@ -32,10 +32,11 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error proxying jisho.org request:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error', message: error.message },
+      { error: 'Internal server error', message: errorMessage },
       { status: 500 }
     );
   }
