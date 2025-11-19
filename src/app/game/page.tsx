@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "../components/navbar";
+import { saveQuizSession, updateAnswerCount, updateStreak } from "../utils/storage";
 
 type Kana = {
   char: string;
@@ -91,6 +92,7 @@ export default function Game() {
   const [current, setCurrent] = useState<Kana | null>(null);
   const [input, setInput] = useState("");
   const [score, setScore] = useState(0);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [lives, setLives] = useState(5);
   const [gameOver, setGameOver] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
@@ -109,6 +111,7 @@ export default function Game() {
       setKanaSet(chosenSet);
       setCurrent(getRandomKana(chosenSet));
       setScore(0);
+      setTotalQuestions(0);
       setLives(5);
       setGameOver(false);
       setInput("");
@@ -128,31 +131,75 @@ export default function Game() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!current) return;
+    if (!current || gameOver) return;
 
-    if (input.toLowerCase().trim() === current.romaji) {
-      setScore((s) => s + 1);
+    const isCorrect = input.toLowerCase().trim() === current.romaji;
+    const newTotalQuestions = totalQuestions + 1;
+    setTotalQuestions(newTotalQuestions);
+
+    if (isCorrect) {
+      const newScore = score + 1;
+      setScore(newScore);
+      updateAnswerCount(true);
+      updateStreak(true);
+      
+      // Continue game
+      setCurrent(getRandomKana(kanaSet));
+      setInput("");
     } else {
-      setLives((l) => {
-        const newLives = l - 1;
-        if (newLives <= 0) {
-          setGameOver(true);
-          return 0;
-        }
-        return newLives;
-      });
+      updateAnswerCount(false);
+      updateStreak(false);
+      
+      const newLives = lives - 1;
+      setLives(newLives);
+      
+      if (newLives <= 0) {
+        // Game over - save session
+        const duration = Math.floor((Date.now() - startTime) / 1000);
+        const accuracy = newTotalQuestions > 0 ? (score / newTotalQuestions) * 100 : 0;
+        
+        saveQuizSession({
+          date: new Date().toISOString(),
+          mode: `kana-${mode}`,
+          score,
+          totalQuestions: newTotalQuestions,
+          accuracy,
+          duration,
+        });
+        
+        setGameOver(true);
+      } else {
+        // Continue game
+        setCurrent(getRandomKana(kanaSet));
+        setInput("");
+      }
     }
-
-    setCurrent(getRandomKana(kanaSet));
-    setInput("");
   };
 
   const resetGame = () => {
+    // Save current session before resetting if there were questions answered
+    if (totalQuestions > 0) {
+      const duration = Math.floor((Date.now() - startTime) / 1000);
+      const accuracy = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
+      
+      saveQuizSession({
+        date: new Date().toISOString(),
+        mode: `kana-${mode}`,
+        score,
+        totalQuestions,
+        accuracy,
+        duration,
+      });
+    }
+    
     setScore(0);
+    setTotalQuestions(0);
     setLives(5);
     setGameOver(false);
     setCurrent(getRandomKana(kanaSet));
     setInput("");
+    setStartTime(Date.now());
+    setElapsedTime(0);
   };
 
   if (!mode) {
