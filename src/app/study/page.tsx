@@ -157,7 +157,7 @@ export default function StudyPage() {
     romaji: h.romaji,
     type: h.type,
   };
-}).filter(k => (showHiragana || showKatakana));
+}).filter(() => (showHiragana || showKatakana));
 
 
   const [scrolling, setScrolling] = useState(false);
@@ -178,7 +178,7 @@ export default function StudyPage() {
       if (stored) {
         try {
           setRecentSearches(JSON.parse(stored));
-        } catch (e) {
+        } catch (e: unknown) {
           console.error("Failed to load recent searches:", e);
         }
       }
@@ -211,7 +211,7 @@ export default function StudyPage() {
         grade: data.grade,
         stroke_count: data.stroke_count,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error fetching kanji:", error);
       return null;
     }
@@ -390,7 +390,7 @@ export default function StudyPage() {
       }
       
       return { words: [], kanji: [] };
-    } catch (error) {
+    } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.warn("Jisho API unavailable (network issue):", errorMessage);
       // On error, check fallback map
@@ -489,7 +489,7 @@ export default function StudyPage() {
       } else if (wordResults.length === 0) {
         setKanjiError("No results found. Please try a different search term.");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       setKanjiError("An error occurred while searching. Please try again.");
       console.error("Search error:", error);
     } finally {
