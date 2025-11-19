@@ -204,7 +204,7 @@ export default function Game() {
 
   if (!mode) {
     return (
-      <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
+      <div className="flex flex-col min-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
         <Navbar />
         <div className="flex flex-col items-center justify-center flex-1 p-8">
           <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">Kana Quiz Game</h1>
@@ -235,7 +235,7 @@ export default function Game() {
   }
 
   return (
-  <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
+  <div className="min-h-screen overflow-hidden flex flex-col bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
     <Navbar />
     <div className="flex-1 flex flex-col items-center justify-center p-8">
       <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
