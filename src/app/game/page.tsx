@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Navbar from "../components/navbar";
-import { addAbortSignal } from "stream";
 
 type Kana = {
   char: string;
@@ -94,6 +93,8 @@ export default function Game() {
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(5);
   const [gameOver, setGameOver] = useState(false);
+  const [startTime, setStartTime] = useState<number>(0);
+  const [elapsedTime, setElapsedTime] = useState<number>(0);
 
   const getRandomKana = (list: Kana[]) => list[Math.floor(Math.random() * list.length)];
 
@@ -111,8 +112,19 @@ export default function Game() {
       setLives(5);
       setGameOver(false);
       setInput("");
+      setStartTime(Date.now());
+      setElapsedTime(0);
     }
   }, [mode]);
+
+  useEffect(() => {
+    if (mode && !gameOver) {
+      const interval = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [mode, gameOver, startTime]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,27 +157,27 @@ export default function Game() {
 
   if (!mode) {
     return (
-      <div className="flex flex-col h-screen overflow-hidden bg-gray-900 text-white">
+      <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
         <Navbar />
         <div className="flex flex-col items-center justify-center flex-1 p-8">
-          <h1 className="text-3xl font-bold mb-6">Kana Quiz Game</h1>
-          <p className="mb-4">Choose a mode:</p>
-          <div className="flex gap-4">
+          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">Kana Quiz Game</h1>
+          <p className="mb-8 text-xl text-gray-300">Choose a mode:</p>
+          <div className="flex flex-wrap justify-center gap-6">
             <button
               onClick={() => setMode("hiragana")}
-              className="px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="px-8 py-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl hover:from-blue-500 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl font-medium text-lg"
             >
               Hiragana
             </button>
             <button
               onClick={() => setMode("katakana")}
-              className="px-6 py-2 bg-green-600 rounded-lg hover:bg-green-700"
+              className="px-8 py-4 bg-gradient-to-br from-green-600 to-green-800 rounded-xl hover:from-green-500 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl font-medium text-lg"
             >
               Katakana
             </button>
             <button
               onClick={() => setMode("all")}
-              className="px-6 py-2 bg-purple-600 rounded-lg hover:bg-purple-700"
+              className="px-8 py-4 bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl hover:from-purple-500 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl font-medium text-lg"
             >
               All Kana
             </button>
@@ -176,24 +188,27 @@ export default function Game() {
   }
 
   return (
-  <div className="h-screen overflow-hidden flex flex-col bg-gray-900 text-white">
+  <div className="h-screen overflow-hidden flex flex-col bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
     <Navbar />
     <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <h1 className="text-3xl font-bold mb-6">Kana Quiz Game ({mode})</h1>
+      <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
+        Kana Quiz Game ({mode})
+      </h1>
 
       {gameOver ? (
-        <div className="text-center">
-          <p className="text-2xl mb-4">Game Over! Your score: {score}</p>
+        <div className="text-center bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
+          <p className="text-3xl mb-2 font-bold">Game Over!</p>
+          <p className="text-xl mb-6 text-gray-300">Your score: <span className="text-green-400 font-bold">{score}</span></p>
           <div className="flex justify-center gap-4">
             <button
               onClick={resetGame}
-              className="px-6 py-2 bg-blue-500 rounded-lg hover:bg-blue-600"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 transition-all transform hover:scale-105 font-medium shadow-lg"
             >
               Restart
             </button>
             <button
               onClick={() => setMode(null)}
-              className="px-6 py-2 bg-gray-500 rounded-lg hover:bg-gray-600"
+              className="px-8 py-3 bg-gray-700 rounded-xl hover:bg-gray-600 transition-all transform hover:scale-105 font-medium shadow-lg"
             >
               Main Menu
             </button>
@@ -201,25 +216,48 @@ export default function Game() {
         </div>
       ) : (
         <>
-          <div className="text-8xl font-bold mb-6">{current?.char}</div>
-          <form onSubmit={handleSubmit} className="mb-4 flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="px-4 py-2 text-white rounded-lg"
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-green-500 rounded-lg hover:bg-green-600"
-            >
-              Submit
-            </button>
-          </form>
-          <div className="flex gap-6 mt-4">
-            <p>Score: {score}</p>
-            <p>Lives: {lives}</p>
+          <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 mb-6 shadow-2xl border border-gray-700">
+            <div className="text-9xl font-bold mb-6 text-center text-green-300">{current?.char}</div>
+            <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-4">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                className="px-6 py-4 text-xl bg-gray-700 border-2 border-gray-600 rounded-xl focus:border-green-500 focus:outline-none text-white text-center"
+                placeholder="Type romaji..."
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-500 hover:to-green-600 transition-all transform hover:scale-105 font-bold text-lg shadow-lg"
+              >
+                Submit
+              </button>
+            </form>
+          </div>
+          <div className="flex gap-6 mt-4 flex-wrap justify-center">
+            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
+              <span className="text-gray-300">Score: </span>
+              <span className="text-green-400 font-bold text-xl">{score}</span>
+            </div>
+            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
+              <span className="text-gray-300">Lives: </span>
+              <span className="text-red-400 font-bold text-xl">{lives}</span>
+            </div>
+            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
+              <span className="text-gray-300">⏱️ Time: </span>
+              <span className="text-blue-400 font-bold text-xl">
+                {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, "0")}
+              </span>
+            </div>
+            {score > 0 && (
+              <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
+                <span className="text-gray-300">Rate: </span>
+                <span className="text-purple-400 font-bold text-xl">
+                  {Math.round((score / (elapsedTime / 60 + 1)) * 10) / 10}/min
+                </span>
+              </div>
+            )}
           </div>
         </>
       )}
