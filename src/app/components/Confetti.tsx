@@ -18,15 +18,15 @@ export default function Confetti({ trigger }: ConfettiProps) {
   useEffect(() => {
     if (trigger) {
       const colors = [
-        "#FF6B6B",
+        "#FAA742",
         "#4ECDC4",
         "#45B7D1",
-        "#FFA07A",
+        "#FF6B6B",
         "#98D8C8",
         "#F7DC6F",
         "#BB8FCE",
       ];
-      
+
       const newParticles = Array.from({ length: 50 }, (_, i) => ({
         id: i,
         x: Math.random() * 100,
@@ -34,9 +34,9 @@ export default function Confetti({ trigger }: ConfettiProps) {
         color: colors[Math.floor(Math.random() * colors.length)],
         delay: Math.random() * 0.5,
       }));
-      
+
       setParticles(newParticles);
-      
+
       setTimeout(() => {
         setParticles([]);
       }, 3000);
@@ -62,4 +62,3 @@ export default function Confetti({ trigger }: ConfettiProps) {
     </div>
   );
 }
-

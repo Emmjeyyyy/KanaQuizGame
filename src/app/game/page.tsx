@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navbar from "../components/navbar";
+import { TransitionLink } from "../components/TransitionLink";
 import { saveQuizSession, updateAnswerCount, updateStreak } from "../utils/storage";
 
 type Kana = {
@@ -142,22 +142,20 @@ export default function Game() {
       setScore(newScore);
       updateAnswerCount(true);
       updateStreak(true);
-      
-      // Continue game
+
       setCurrent(getRandomKana(kanaSet));
       setInput("");
     } else {
       updateAnswerCount(false);
       updateStreak(false);
-      
+
       const newLives = lives - 1;
       setLives(newLives);
-      
+
       if (newLives <= 0) {
-        // Game over - save session
         const duration = Math.floor((Date.now() - startTime) / 1000);
         const accuracy = newTotalQuestions > 0 ? (score / newTotalQuestions) * 100 : 0;
-        
+
         saveQuizSession({
           date: new Date().toISOString(),
           mode: `kana-${mode}`,
@@ -166,10 +164,9 @@ export default function Game() {
           accuracy,
           duration,
         });
-        
+
         setGameOver(true);
       } else {
-        // Continue game
         setCurrent(getRandomKana(kanaSet));
         setInput("");
       }
@@ -177,11 +174,10 @@ export default function Game() {
   };
 
   const resetGame = () => {
-    // Save current session before resetting if there were questions answered
     if (totalQuestions > 0) {
       const duration = Math.floor((Date.now() - startTime) / 1000);
       const accuracy = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
-      
+
       saveQuizSession({
         date: new Date().toISOString(),
         mode: `kana-${mode}`,
@@ -191,7 +187,7 @@ export default function Game() {
         duration,
       });
     }
-    
+
     setScore(0);
     setTotalQuestions(0);
     setLives(5);
@@ -204,27 +200,28 @@ export default function Game() {
 
   if (!mode) {
     return (
-      <div className="flex flex-col min-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
-        <Navbar />
+      <div className="flex flex-col min-h-screen overflow-hidden bg-gradient-to-br from-background-primary via-background-secondary to-background-primary">
         <div className="flex flex-col items-center justify-center flex-1 p-8">
-          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">Kana Quiz Game</h1>
-          <p className="mb-8 text-xl text-gray-300">Choose a mode:</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">
+            Kana Quiz Game
+          </h1>
+          <p className="mb-8 text-xl text-text-secondary">Choose a mode:</p>
           <div className="flex flex-wrap justify-center gap-6">
             <button
               onClick={() => setMode("hiragana")}
-              className="px-8 py-4 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl hover:from-blue-500 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl font-medium text-lg"
+              className="px-8 py-4 bg-gradient-to-br from-info to-blue-700 rounded-xl hover:from-info hover:to-blue-600 transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl font-medium text-lg border border-neutral-surface"
             >
               Hiragana
             </button>
             <button
               onClick={() => setMode("katakana")}
-              className="px-8 py-4 bg-gradient-to-br from-green-600 to-green-800 rounded-xl hover:from-green-500 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl font-medium text-lg"
+              className="px-8 py-4 bg-gradient-to-br from-success to-green-700 rounded-xl hover:from-success hover:to-green-600 transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl font-medium text-lg border border-neutral-surface"
             >
               Katakana
             </button>
             <button
               onClick={() => setMode("all")}
-              className="px-8 py-4 bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl hover:from-purple-500 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-2xl font-medium text-lg"
+              className="px-8 py-4 bg-gradient-to-br from-purple-600 to-purple-800 rounded-xl hover:from-purple-500 hover:to-purple-700 transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl font-medium text-lg border border-neutral-surface"
             >
               All Kana
             </button>
@@ -235,71 +232,72 @@ export default function Game() {
   }
 
   return (
-  <div className="min-h-screen overflow-hidden flex flex-col bg-gradient-to-br from-gray-900 via-green-900 to-gray-900 text-white">
-    <Navbar />
+  <div className="min-h-screen overflow-hidden flex flex-col bg-gradient-to-br from-background-primary via-background-secondary to-background-primary">
     <div className="flex-1 flex flex-col items-center justify-center p-8">
-      <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
+      <h1 className="text-3xl md:text-4xl font-bold mb-2 text-gradient">
         Kana Quiz Game ({mode})
       </h1>
 
       {gameOver ? (
-        <div className="text-center bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 shadow-2xl">
-          <p className="text-3xl mb-2 font-bold">Game Over!</p>
-          <p className="text-xl mb-6 text-gray-300">Your score: <span className="text-green-400 font-bold">{score}</span></p>
+        <div className="text-center glass-effect rounded-2xl p-8 shadow-2xl border border-neutral-surface">
+          <p className="text-3xl mb-2 font-bold text-text-primary">Game Over!</p>
+          <p className="text-xl mb-6 text-text-secondary">
+            Your score: <span className="text-success font-bold">{score}</span>
+          </p>
           <div className="flex justify-center gap-4">
             <button
               onClick={resetGame}
-              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-500 hover:to-blue-600 transition-all transform hover:scale-105 font-medium shadow-lg"
+              className="px-8 py-3 bg-gradient-to-r from-info to-blue-700 rounded-xl hover:from-info hover:to-blue-600 transition-all transform hover:scale-105 font-medium shadow-lg border border-neutral-surface"
             >
               Restart
             </button>
-            <button
-              onClick={() => setMode(null)}
-              className="px-8 py-3 bg-gray-700 rounded-xl hover:bg-gray-600 transition-all transform hover:scale-105 font-medium shadow-lg"
+            <TransitionLink
+              href="/"
+              className="px-8 py-3 bg-neutral-surface rounded-xl hover:bg-accent-interactive transition-all transform hover:scale-105 font-medium shadow-lg border border-neutral-surface inline-block text-center"
             >
               Main Menu
-            </button>
+            </TransitionLink>
           </div>
         </div>
       ) : (
         <>
-          <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-8 mb-6 shadow-2xl border border-gray-700">
-            <div className="text-9xl font-bold mb-6 text-center text-green-300">{current?.char}</div>
+          <div className="glass-effect rounded-2xl p-8 mb-6 shadow-2xl border border-neutral-surface w-full max-w-md">
+            <div className="text-9xl font-bold mb-6 text-center text-success animate-float">{current?.char}</div>
             <form onSubmit={handleSubmit} className="mb-4 flex flex-col gap-4">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="px-6 py-4 text-xl bg-gray-700 border-2 border-gray-600 rounded-xl focus:border-green-500 focus:outline-none text-white text-center"
+                className="px-6 py-4 text-xl bg-background-secondary border-2 border-neutral-surface rounded-xl focus:border-highlight-cta focus:outline-none text-text-primary text-center transition-colors"
                 placeholder="Type romaji..."
                 autoFocus
               />
               <button
                 type="submit"
-                className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-500 hover:to-green-600 transition-all transform hover:scale-105 font-bold text-lg shadow-lg"
+                className="px-8 py-4 bg-gradient-to-r from-success to-green-700 rounded-xl hover:from-success hover:to-green-600 transition-all transform hover:scale-105 font-bold text-lg shadow-lg border border-neutral-surface"
               >
                 Submit
               </button>
             </form>
           </div>
           <div className="flex gap-6 mt-4 flex-wrap justify-center">
-            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
-              <span className="text-gray-300">Score: </span>
-              <span className="text-green-400 font-bold text-xl">{score}</span>
+            <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
+              <span className="text-text-secondary">Score: </span>
+              <span className="text-success font-bold text-xl">{score}</span>
             </div>
-            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
-              <span className="text-gray-300">Lives: </span>
-              <span className="text-red-400 font-bold text-xl">{lives}</span>
+            <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
+              <span className="text-text-secondary">Lives: </span>
+              <span className="text-error font-bold text-xl">{lives}</span>
             </div>
-            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
-              <span className="text-gray-300">⏱️ Time: </span>
-              <span className="text-blue-400 font-bold text-xl">
+            <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
+              <span className="text-text-secondary">⏱️ Time: </span>
+              <span className="text-info font-bold text-xl">
                 {Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, "0")}
               </span>
             </div>
             {score > 0 && (
-              <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
-                <span className="text-gray-300">Rate: </span>
+              <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
+                <span className="text-text-secondary">Rate: </span>
                 <span className="text-purple-400 font-bold text-xl">
                   {Math.round((score / (elapsedTime / 60 + 1)) * 10) / 10}/min
                 </span>

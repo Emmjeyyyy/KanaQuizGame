@@ -30,23 +30,23 @@ export default function Toast({
 
   const bgColor =
     type === "success"
-      ? "bg-green-600"
+      ? "bg-success"
       : type === "error"
-      ? "bg-red-600"
-      : "bg-blue-600";
+      ? "bg-error"
+      : "bg-info";
 
   return (
     <div className="fixed top-20 right-4 z-50 animate-slide-in-right">
       <div
-        className={`${bgColor} text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 min-w-[300px] max-w-md`}
+        className={`${bgColor} text-text-primary px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px] max-w-md border border-neutral-surface`}
       >
-        <span className="text-xl">
+        <span className="text-xl font-bold">
           {type === "success" ? "✓" : type === "error" ? "✗" : "ℹ"}
         </span>
         <span className="flex-1">{message}</span>
         <button
           onClick={onClose}
-          className="text-white hover:text-gray-200 transition-colors"
+          className="text-text-primary hover:text-text-secondary transition-colors"
         >
           ✕
         </button>
@@ -54,4 +54,3 @@ export default function Toast({
     </div>
   );
 }
-

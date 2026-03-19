@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Navbar from "../components/navbar";
+import { TransitionLink } from "../components/TransitionLink";
 import Toast from "../components/Toast";
 import Confetti from "../components/Confetti";
 import {
@@ -60,7 +60,6 @@ export default function KanjiQuizPage() {
 
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Common kanji characters organized by difficulty
   const kanjiByDifficulty = {
     easy: [
       "一", "二", "三", "四", "五", "六", "七", "八", "九", "十",
@@ -86,12 +85,10 @@ export default function KanjiQuizPage() {
     ...kanjiByDifficulty.hard,
   ];
 
-  // Filter kanji based on search query
   const filteredKanji = searchQuery
     ? allKanji.filter((k) => k.includes(searchQuery))
     : allKanji;
 
-  // Get kanji list based on difficulty
   const getKanjiList = (): string[] => {
     if (difficulty === "all") return filteredKanji;
     if (difficulty === "easy") return kanjiByDifficulty.easy.filter(k => filteredKanji.includes(k));
@@ -99,7 +96,6 @@ export default function KanjiQuizPage() {
     return kanjiByDifficulty.hard.filter(k => filteredKanji.includes(k));
   };
 
-  // Fetch kanji data from kanjiapi.dev
   const fetchKanjiData = async (kanji: string): Promise<KanjiData | null> => {
     try {
       const response = await fetch(`https://kanjiapi.dev/v1/kanji/${encodeURIComponent(kanji)}`);
@@ -121,12 +117,11 @@ export default function KanjiQuizPage() {
     }
   };
 
-  // Get random kanji
   const getRandomKanji = async (useWeakKanji = false) => {
     const list = useWeakKanji && reviewMode
       ? getWeakKanji(20)
       : getKanjiList();
-    
+
     if (list.length === 0) {
       setToast({ message: "No kanji found matching your criteria", type: "error" });
       return;
@@ -135,7 +130,7 @@ export default function KanjiQuizPage() {
     setLoading(true);
     const randomKanji = list[Math.floor(Math.random() * list.length)];
     const data = await fetchKanjiData(randomKanji);
-    
+
     if (data) {
       setCurrentKanji(data);
       setInput("");
@@ -143,11 +138,11 @@ export default function KanjiQuizPage() {
       setFeedback(null);
       setShowAnswer(false);
       setQuestionStartTime(Date.now());
-      
+
       if (timerMode === "per-question") {
-        setTimeLeft(30); // 30 seconds per question
+        setTimeLeft(30);
       }
-      
+
       if (mode === "multiple-choice") {
         await generateMultipleChoiceOptions(data);
       }
@@ -155,14 +150,13 @@ export default function KanjiQuizPage() {
     setLoading(false);
   };
 
-  // Generate multiple choice options
   const generateMultipleChoiceOptions = async (kanjiData: KanjiData) => {
     if (questionType === "meaning") {
       const correctMeaning = kanjiData.meanings[0] || "unknown";
       const correctOptions = [correctMeaning];
       const wrongKanji = getKanjiList().filter(k => k !== kanjiData.kanji);
       const shuffled = wrongKanji.sort(() => 0.5 - Math.random()).slice(0, 5);
-      
+
       try {
         const results = await Promise.all(shuffled.map(k => fetchKanjiData(k)));
         const wrongMeanings: string[] = [];
@@ -174,15 +168,15 @@ export default function KanjiQuizPage() {
             }
           }
         });
-        
+
         const options = [...correctOptions, ...wrongMeanings]
           .filter((v, i, a) => a.findIndex(x => x.toLowerCase() === v.toLowerCase()) === i)
           .slice(0, 4);
-        
+
         while (options.length < 4) {
           options.push(`option ${options.length + 1}`);
         }
-        
+
         setMultipleChoiceOptions(options.sort(() => Math.random() - 0.5));
       } catch {
         setMultipleChoiceOptions([correctMeaning, "option 1", "option 2", "option 3"]);
@@ -193,13 +187,13 @@ export default function KanjiQuizPage() {
         ...kanjiData.on_readings,
         ...kanjiData.name_readings
       ].filter(r => r && r.length > 0);
-      
+
       if (allReadings.length > 0) {
         const correctReading = allReadings[0];
         const correctOptions = [correctReading];
         const wrongKanji = getKanjiList().filter(k => k !== kanjiData.kanji);
         const shuffled = wrongKanji.sort(() => 0.5 - Math.random()).slice(0, 5);
-        
+
         try {
           const results = await Promise.all(shuffled.map(k => fetchKanjiData(k)));
           const wrongReadings: string[] = [];
@@ -215,15 +209,15 @@ export default function KanjiQuizPage() {
               }
             }
           });
-          
+
           const options = [...correctOptions, ...wrongReadings]
             .filter((v, i, a) => a.findIndex(x => x.toLowerCase() === v.toLowerCase()) === i)
             .slice(0, 4);
-          
+
           while (options.length < 4) {
             options.push(`reading${options.length + 1}`);
           }
-          
+
           setMultipleChoiceOptions(options.sort(() => Math.random() - 0.5));
         } catch {
           setMultipleChoiceOptions([correctReading, "reading1", "reading2", "reading3"]);
@@ -234,13 +228,11 @@ export default function KanjiQuizPage() {
     }
   };
 
-  // Timer effect
   useEffect(() => {
     if (timerMode === "per-question" && timeLeft > 0 && !showAnswer) {
       timerIntervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            // Time's up - mark as incorrect
             if (currentKanji) {
               handleAnswer(false);
             }
@@ -260,16 +252,12 @@ export default function KanjiQuizPage() {
         clearInterval(timerIntervalRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerMode, timeLeft, showAnswer, currentKanji, gameOver, mode]);
 
-  // Initialize kanji list
   useEffect(() => {
     setKanjiList(getKanjiList());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [difficulty, searchQuery]);
 
-  // Load first question when mode is selected
   useEffect(() => {
     if (mode && kanjiList.length > 0 && !reviewMode) {
       getRandomKanji();
@@ -282,28 +270,25 @@ export default function KanjiQuizPage() {
         setTimeLeft(0);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, questionType, difficulty]);
 
-  // Handle answer submission
   const handleAnswer = (isCorrect: boolean) => {
     if (!currentKanji) return;
-    
+
     setFeedback(isCorrect ? "correct" : "incorrect");
     setShowAnswer(true);
-    
+
     if (isCorrect) {
       setScore((s) => s + 1);
       updateKanjiStat(currentKanji.kanji, true);
       updateStreak(true);
       updateAnswerCount(true);
-      
-      // Show confetti for streaks
+
       if (stats.currentStreak > 0 && (stats.currentStreak + 1) % 5 === 0) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
       }
-      
+
       setToast({ message: "Correct! 🎉", type: "success" });
     } else {
       updateKanjiStat(currentKanji.kanji, false);
@@ -312,7 +297,7 @@ export default function KanjiQuizPage() {
       setIncorrectAnswers((prev) => [...prev, currentKanji]);
       setToast({ message: "Incorrect. Keep practicing! 💪", type: "error" });
     }
-    
+
     setTotalQuestions((t) => t + 1);
     const updatedStats = getStats();
     setStats(updatedStats);
@@ -331,7 +316,6 @@ export default function KanjiQuizPage() {
     }, 2000);
   };
 
-  // Check answer for typing mode
   const checkTypingAnswer = () => {
     if (!currentKanji || !input.trim() || showAnswer) return;
 
@@ -356,7 +340,6 @@ export default function KanjiQuizPage() {
     handleAnswer(isCorrect);
   };
 
-  // Check answer for multiple choice mode
   const checkMultipleChoiceAnswer = (option: string) => {
     if (!currentKanji || selectedOption || showAnswer) return;
 
@@ -398,7 +381,7 @@ export default function KanjiQuizPage() {
   const endQuiz = () => {
     const duration = Math.floor((Date.now() - sessionStartTime) / 1000);
     const accuracy = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0;
-    
+
     saveQuizSession({
       date: new Date().toISOString(),
       mode: `${mode}-${questionType}`,
@@ -407,10 +390,10 @@ export default function KanjiQuizPage() {
       accuracy,
       duration,
     });
-    
+
     setGameOver(true);
     setStats(getStats());
-    
+
     if (accuracy >= 80) {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
@@ -439,19 +422,17 @@ export default function KanjiQuizPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Mode selection screen
   if (!mode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
-        <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-background-primary via-background-secondary to-background-primary">
         <Confetti trigger={showConfetti} />
-        <div className="flex flex-col items-center justify-center min-h-screen p-8">
+        <div className="flex flex-col items-center justify-center min-h-screen p-8 pt-20">
           <div className="text-center mb-12 animate-fade-in">
-            <h1 className="text-6xl font-bold mb-4 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-6xl font-bold mb-4 text-gradient">
               Kanji Quiz
             </h1>
-            <p className="text-xl text-gray-300 mb-2">Test your kanji knowledge!</p>
-            <div className="flex justify-center gap-4 mt-4 text-sm text-gray-400">
+            <p className="text-xl text-text-secondary mb-2">Test your kanji knowledge!</p>
+            <div className="flex justify-center gap-4 mt-4 text-sm text-text-muted">
               <div>📊 {stats.totalQuizzes} Quizzes</div>
               <div>🔥 {stats.currentStreak} Day Streak</div>
               <div>⭐ {stats.bestStreak} Best Streak</div>
@@ -461,27 +442,27 @@ export default function KanjiQuizPage() {
           <div className="grid md:grid-cols-2 gap-6 max-w-2xl w-full animate-scale-in">
             <button
               onClick={() => setMode("typing")}
-              className="group relative p-8 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl hover:from-blue-500 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-blue-400"
+              className="group relative p-8 bg-gradient-to-br from-info to-blue-800 rounded-2xl hover:from-info hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl border border-neutral-surface hover:border-highlight-cta"
             >
               <div className="text-5xl mb-4">⌨️</div>
-              <h2 className="text-2xl font-bold mb-2">Typing Quiz</h2>
-              <p className="text-gray-200">Type the meaning or reading</p>
+              <h2 className="text-2xl font-bold mb-2 text-text-primary">Typing Quiz</h2>
+              <p className="text-text-secondary">Type the meaning or reading</p>
             </button>
 
             <button
               onClick={() => setMode("multiple-choice")}
-              className="group relative p-8 bg-gradient-to-br from-green-600 to-green-800 rounded-2xl hover:from-green-500 hover:to-green-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-green-400"
+              className="group relative p-8 bg-gradient-to-br from-success to-green-800 rounded-2xl hover:from-success hover:to-green-700 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl border border-neutral-surface hover:border-highlight-cta"
             >
               <div className="text-5xl mb-4">✓</div>
-              <h2 className="text-2xl font-bold mb-2">Multiple Choice</h2>
-              <p className="text-gray-200">Choose from options</p>
+              <h2 className="text-2xl font-bold mb-2 text-text-primary">Multiple Choice</h2>
+              <p className="text-text-secondary">Choose from options</p>
             </button>
           </div>
 
           {incorrectAnswers.length > 0 && (
             <button
               onClick={startReview}
-              className="mt-8 px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 rounded-xl hover:from-orange-500 hover:to-red-500 transition-all transform hover:scale-105 shadow-lg"
+              className="mt-8 px-6 py-3 bg-gradient-to-r from-warning to-orange-600 rounded-xl hover:from-warning hover:to-orange-500 transition-all transform hover:scale-105 shadow-lg border border-neutral-surface"
             >
               📚 Review {incorrectAnswers.length} Incorrect Answers
             </button>
@@ -492,8 +473,7 @@ export default function KanjiQuizPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-white">
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-br from-background-primary via-background-secondary to-background-primary">
       <Toast
         message={toast?.message || ""}
         type={toast?.type || "info"}
@@ -501,48 +481,49 @@ export default function KanjiQuizPage() {
         onClose={() => setToast(null)}
       />
       <Confetti trigger={showConfetti} />
-      
+
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="text-center mb-8 animate-fade-in">
           <div className="flex justify-between items-center mb-4">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all"
+              className="px-4 py-2 bg-background-secondary rounded-lg hover:bg-neutral-surface transition-all border border-neutral-surface"
             >
               ⚙️ Settings
             </button>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold text-gradient">
               Kanji Quiz - {mode === "typing" ? "Typing" : "Multiple Choice"}
             </h1>
-            <button
-              onClick={() => {
-                if (totalQuestions > 0) {
-                  endQuiz();
-                } else {
-                  setMode(null);
-                }
-              }}
-              className="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-all"
-            >
-              {totalQuestions > 0 ? "End Quiz" : "Back"}
-            </button>
+            {totalQuestions > 0 ? (
+              <button
+                onClick={endQuiz}
+                className="px-4 py-2 bg-background-secondary rounded-lg hover:bg-neutral-surface transition-all border border-neutral-surface"
+              >
+                End Quiz
+              </button>
+            ) : (
+              <TransitionLink
+                href="/"
+                className="px-4 py-2 bg-background-secondary rounded-lg hover:bg-neutral-surface transition-all border border-neutral-surface inline-block text-center"
+              >
+                Back
+              </TransitionLink>
+            )}
           </div>
 
-          {/* Settings Panel */}
           {showSettings && (
-            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-6 mb-6 animate-scale-in border border-gray-700">
-              <h3 className="text-xl font-bold mb-4">Quiz Settings</h3>
+            <div className="glass-effect rounded-xl p-6 mb-6 animate-scale-in border border-neutral-surface">
+              <h3 className="text-xl font-bold mb-4 text-text-primary">Quiz Settings</h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block mb-2 text-sm">Question Type</label>
+                  <label className="block mb-2 text-sm text-text-secondary">Question Type</label>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setQuestionType("meaning")}
                       className={`px-4 py-2 rounded-lg transition-all ${
                         questionType === "meaning"
                           ? "bg-purple-600 text-white"
-                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          : "bg-neutral-surface text-text-secondary hover:bg-accent-interactive"
                       }`}
                     >
                       Meaning
@@ -552,7 +533,7 @@ export default function KanjiQuizPage() {
                       className={`px-4 py-2 rounded-lg transition-all ${
                         questionType === "reading"
                           ? "bg-purple-600 text-white"
-                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          : "bg-neutral-surface text-text-secondary hover:bg-accent-interactive"
                       }`}
                     >
                       Reading
@@ -560,11 +541,11 @@ export default function KanjiQuizPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block mb-2 text-sm">Difficulty</label>
+                  <label className="block mb-2 text-sm text-text-secondary">Difficulty</label>
                   <select
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                    className="w-full px-4 py-2 bg-gray-700 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-background-secondary rounded-lg text-text-primary border border-neutral-surface"
                   >
                     <option value="all">All</option>
                     <option value="easy">Easy</option>
@@ -573,11 +554,11 @@ export default function KanjiQuizPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block mb-2 text-sm">Timer</label>
+                  <label className="block mb-2 text-sm text-text-secondary">Timer</label>
                   <select
                     value={timerMode}
                     onChange={(e) => setTimerMode(e.target.value as TimerMode)}
-                    className="w-full px-4 py-2 bg-gray-700 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-background-secondary rounded-lg text-text-primary border border-neutral-surface"
                   >
                     <option value="none">None</option>
                     <option value="per-question">Per Question (30s)</option>
@@ -586,127 +567,125 @@ export default function KanjiQuizPage() {
                 </div>
               </div>
               <div className="mt-4">
-                <label className="block mb-2 text-sm">Search Kanji</label>
+                <label className="block mb-2 text-sm text-text-secondary">Search Kanji</label>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search kanji..."
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-background-secondary rounded-lg text-text-primary border border-neutral-surface focus:border-highlight-cta focus:outline-none"
                 />
               </div>
             </div>
           )}
 
           <div className="flex justify-center flex-wrap gap-4 text-lg mb-4">
-            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
-              Score: <span className="font-bold text-green-400">{score}</span>
+            <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
+              Score: <span className="font-bold text-success">{score}</span>
             </div>
-            <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
-              Questions: <span className="font-bold text-blue-400">{totalQuestions}</span>
+            <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
+              Questions: <span className="font-bold text-info">{totalQuestions}</span>
             </div>
             {totalQuestions > 0 && (
-              <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
+              <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
                 Accuracy: <span className="font-bold text-purple-400">
                   {Math.round((score / totalQuestions) * 100)}%
                 </span>
               </div>
             )}
             {stats.currentStreak > 0 && (
-              <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
-                🔥 Streak: <span className="font-bold text-orange-400">{stats.currentStreak}</span>
+              <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
+                🔥 Streak: <span className="font-bold text-warning">{stats.currentStreak}</span>
               </div>
             )}
             {timerMode === "per-question" && timeLeft > 0 && (
-              <div className={`bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border ${
-                timeLeft < 10 ? "border-red-500 animate-pulse" : "border-gray-700"
+              <div className={`glass-effect px-6 py-3 rounded-xl border ${
+                timeLeft < 10 ? "border-error animate-pulse" : "border-neutral-surface"
               }`}>
                 ⏱️ <span className="font-bold">{timeLeft}s</span>
               </div>
             )}
             {timerMode === "total" && (
-              <div className="bg-gray-800/80 backdrop-blur-sm px-6 py-3 rounded-xl border border-gray-700">
+              <div className="glass-effect px-6 py-3 rounded-xl border border-neutral-surface">
                 ⏱️ <span className="font-bold">{formatTime(timeLeft)}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Quiz Content */}
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500"></div>
-            <p className="mt-4 text-xl">Loading kanji...</p>
+            <p className="mt-4 text-xl text-text-secondary">Loading kanji...</p>
           </div>
         ) : gameOver ? (
           <div className="max-w-2xl mx-auto text-center animate-scale-in">
-            <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-gray-700">
-              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+            <div className="glass-effect rounded-2xl p-8 shadow-2xl border border-neutral-surface">
+              <h2 className="text-4xl font-bold mb-4 text-gradient">
                 Quiz Complete! 🎉
               </h2>
               <div className="grid grid-cols-2 gap-4 my-6">
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-green-400">{score}</div>
-                  <div className="text-gray-400">Correct</div>
+                <div className="bg-neutral-surface/30 rounded-lg p-4 border border-neutral-surface">
+                  <div className="text-2xl font-bold text-success">{score}</div>
+                  <div className="text-text-muted">Correct</div>
                 </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <div className="text-2xl font-bold text-blue-400">{totalQuestions}</div>
-                  <div className="text-gray-400">Total</div>
+                <div className="bg-neutral-surface/30 rounded-lg p-4 border border-neutral-surface">
+                  <div className="text-2xl font-bold text-info">{totalQuestions}</div>
+                  <div className="text-text-muted">Total</div>
                 </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
+                <div className="bg-neutral-surface/30 rounded-lg p-4 border border-neutral-surface">
                   <div className="text-2xl font-bold text-purple-400">
                     {Math.round((score / totalQuestions) * 100)}%
                   </div>
-                  <div className="text-gray-400">Accuracy</div>
+                  <div className="text-text-muted">Accuracy</div>
                 </div>
                 {timerMode === "total" && (
-                  <div className="bg-gray-700/50 rounded-lg p-4">
-                    <div className="text-2xl font-bold text-orange-400">{formatTime(timeLeft)}</div>
-                    <div className="text-gray-400">Time</div>
+                  <div className="bg-neutral-surface/30 rounded-lg p-4 border border-neutral-surface">
+                    <div className="text-2xl font-bold text-warning">{formatTime(timeLeft)}</div>
+                    <div className="text-text-muted">Time</div>
                   </div>
                 )}
               </div>
               <div className="flex justify-center gap-4 mt-6">
                 <button
                   onClick={resetQuiz}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all font-bold"
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all font-bold border border-neutral-surface"
                 >
                   Try Again
                 </button>
                 {incorrectAnswers.length > 0 && (
                   <button
                     onClick={startReview}
-                    className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 rounded-lg hover:from-orange-500 hover:to-red-500 transition-all font-bold"
+                    className="px-6 py-3 bg-gradient-to-r from-warning to-orange-600 rounded-lg hover:from-warning hover:to-orange-500 transition-all font-bold border border-neutral-surface"
                   >
                     Review Mistakes ({incorrectAnswers.length})
                   </button>
                 )}
-                <button
-                  onClick={() => setMode(null)}
-                  className="px-6 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all font-bold"
+                <TransitionLink
+                  href="/"
+                  className="px-6 py-3 bg-neutral-surface rounded-lg hover:bg-accent-interactive transition-all font-bold border border-neutral-surface inline-block text-center"
                 >
                   Main Menu
-                </button>
+                </TransitionLink>
               </div>
             </div>
           </div>
         ) : currentKanji ? (
           <div className="max-w-2xl mx-auto animate-fade-in">
-            {/* Question */}
-            <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-8 mb-6 shadow-2xl border border-gray-700">
+            <div className="glass-effect rounded-2xl p-8 mb-6 shadow-2xl border border-neutral-surface">
               {reviewMode && (
                 <div className="mb-4 text-center">
-                  <span className="px-4 py-2 bg-orange-600 rounded-lg text-sm font-bold">
+                  <span className="px-4 py-2 bg-warning rounded-lg text-sm font-bold text-background-primary">
                     Review Mode: {reviewIndex + 1} / {incorrectAnswers.length}
                   </span>
                 </div>
               )}
-              
+
               <div className="text-center mb-6">
                 <div className="text-9xl font-bold mb-4 text-purple-300 animate-scale-in">
                   {currentKanji.kanji}
                 </div>
-                <div className="flex justify-center gap-4 text-sm text-gray-400">
+                <div className="flex justify-center gap-4 text-sm text-text-muted">
                   {currentKanji.stroke_count && (
                     <span>✍️ {currentKanji.stroke_count} strokes</span>
                   )}
@@ -722,14 +701,13 @@ export default function KanjiQuizPage() {
               </div>
 
               <div className="text-center mb-6">
-                <p className="text-xl text-gray-300">
+                <p className="text-xl text-text-secondary">
                   {questionType === "meaning"
                     ? "What is the meaning?"
                     : "What is the reading?"}
                 </p>
               </div>
 
-              {/* Typing Mode */}
               {mode === "typing" && (
                 <form
                   onSubmit={(e) => {
@@ -743,21 +721,20 @@ export default function KanjiQuizPage() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     disabled={showAnswer}
-                    className="w-full px-6 py-4 text-xl bg-gray-700 border-2 border-gray-600 rounded-lg focus:border-purple-500 focus:outline-none text-white disabled:opacity-50 transition-all"
+                    className="w-full px-6 py-4 text-xl bg-background-secondary border-2 border-neutral-surface rounded-lg focus:border-purple-500 focus:outline-none text-text-primary disabled:opacity-50 transition-all"
                     placeholder={questionType === "meaning" ? "Enter meaning..." : "Enter reading..."}
                     autoFocus
                   />
                   <button
                     type="submit"
                     disabled={showAnswer || !input.trim()}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                    className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:from-purple-500 hover:to-pink-500 transition-all font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 border border-neutral-surface"
                   >
                     Submit
                   </button>
                 </form>
               )}
 
-              {/* Multiple Choice Mode */}
               {mode === "multiple-choice" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {multipleChoiceOptions.map((option, index) => {
@@ -768,17 +745,17 @@ export default function KanjiQuizPage() {
                         : [...currentKanji.kun_readings, ...currentKanji.on_readings, ...currentKanji.name_readings]
                             .some(r => r.toLowerCase() === option.toLowerCase())
                     );
-                    
-                    let buttonClass = "px-6 py-4 rounded-lg font-medium text-lg transition-all transform ";
-                    
+
+                    let buttonClass = "px-6 py-4 rounded-lg font-medium text-lg transition-all transform border ";
+
                     if (isSelected) {
                       buttonClass += isCorrect
-                        ? "bg-green-600 text-white scale-105 shadow-lg"
-                        : "bg-red-600 text-white scale-105 shadow-lg";
+                        ? "bg-success text-white scale-105 shadow-lg border-success"
+                        : "bg-error text-white scale-105 shadow-lg border-error";
                     } else if (selectedOption && isCorrect) {
-                      buttonClass += "bg-green-600 text-white";
+                      buttonClass += "bg-success text-white border-success";
                     } else {
-                      buttonClass += "bg-gray-700 text-white hover:bg-gray-600 hover:scale-105";
+                      buttonClass += "bg-neutral-surface text-text-primary hover:bg-accent-interactive hover:scale-105 border-neutral-surface";
                     }
 
                     return (
@@ -795,20 +772,19 @@ export default function KanjiQuizPage() {
                 </div>
               )}
 
-              {/* Feedback */}
               {feedback && (
                 <div
-                  className={`mt-6 p-4 rounded-lg text-center animate-scale-in ${
+                  className={`mt-6 p-4 rounded-lg text-center animate-scale-in border-2 ${
                     feedback === "correct"
-                      ? "bg-green-900/50 border-2 border-green-500"
-                      : "bg-red-900/50 border-2 border-red-500"
+                      ? "bg-success/20 border-success"
+                      : "bg-error/20 border-error"
                   }`}
                 >
-                  <p className="text-xl font-bold">
+                  <p className="text-xl font-bold text-text-primary">
                     {feedback === "correct" ? "✓ Correct!" : "✗ Incorrect"}
                   </p>
                   {showAnswer && (
-                    <div className="mt-4 text-gray-300 space-y-2">
+                    <div className="mt-4 text-text-secondary space-y-2">
                       <p className="font-semibold">Meanings: {currentKanji.meanings.join(", ")}</p>
                       {currentKanji.kun_readings.length > 0 && (
                         <p>Kun readings: {currentKanji.kun_readings.join(", ")}</p>
@@ -822,17 +798,16 @@ export default function KanjiQuizPage() {
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="flex justify-center gap-4">
-              <button
-                onClick={() => setMode(null)}
-                className="px-6 py-3 bg-gray-700 rounded-lg hover:bg-gray-600 transition-all"
+              <TransitionLink
+                href="/"
+                className="px-6 py-3 bg-neutral-surface rounded-lg hover:bg-accent-interactive transition-all border border-neutral-surface inline-block text-center"
               >
                 Change Mode
-              </button>
+              </TransitionLink>
               <button
                 onClick={resetQuiz}
-                className="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-500 transition-all"
+                className="px-6 py-3 bg-purple-600 rounded-lg hover:bg-purple-500 transition-all border border-neutral-surface"
               >
                 Reset Quiz
               </button>
@@ -840,7 +815,7 @@ export default function KanjiQuizPage() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-xl">Loading kanji data...</p>
+            <p className="text-xl text-text-secondary">Loading kanji data...</p>
           </div>
         )}
       </div>
